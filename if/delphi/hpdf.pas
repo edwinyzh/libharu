@@ -300,6 +300,10 @@ function HPDF_UseCNTEncodings (pdf: HPDF_Doc): HPDF_STATUS;
          stdcall external LIBHPDF_DLL;
 
 
+function HPDF_UseUTFEncodings (pdf: HPDF_Doc): HPDF_STATUS;
+         stdcall external LIBHPDF_DLL;
+
+
 function HPDF_Page_CreateTextAnnot (page: HPDF_Page; rect: THPDF_Rect;
         const text: HPDF_PCHAR; encoder: HPDF_Encoder): HPDF_Annotation;
          stdcall external LIBHPDF_DLL;
