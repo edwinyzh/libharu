@@ -62,6 +62,7 @@ OBJS = \
 	src/hpdf_page_label.o\
 	src/hpdf_gstate.o \
 	src/hpdf_pages.o \
+	src/hpdf_pdfa.o \
 	src/hpdf_page_operator.o \
 	src/hpdf_destination.o \
 	src/hpdf_annotation.o \
@@ -71,6 +72,7 @@ OBJS = \
 	src/hpdf_encoder_kr.o \
 	src/hpdf_encoder_cns.o \
 	src/hpdf_encoder_cnt.o \
+	src/hpdf_encoder_utf.o \
 	src/hpdf_fontdef_jp.o \
 	src/hpdf_fontdef_kr.o \
 	src/hpdf_fontdef_cns.o \
