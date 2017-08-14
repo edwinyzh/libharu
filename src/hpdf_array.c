@@ -289,7 +289,9 @@ HPDF_Array_Insert  (HPDF_Array  array,
         void *ptr = HPDF_List_ItemAt (array->list, i);
         void *obj_ptr;
 
-        header = (HPDF_Obj_Header *)obj;
+// Start MicroSurvey - [OTT:2110]
+        header = (HPDF_Obj_Header *)ptr;
+// End MicroSurvey - [OTT:2110]
         if (header->obj_class == HPDF_OCLASS_PROXY)
             obj_ptr = ((HPDF_Proxy)ptr)->obj;
         else
