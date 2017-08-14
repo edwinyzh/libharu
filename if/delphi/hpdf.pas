@@ -45,7 +45,8 @@ type
   HPDF_XObject = HPDF_HANDLE;
   HPDF_Annotation = HPDF_HANDLE;
   HPDF_ExtGState = HPDF_HANDLE;
-  HPDF_CHAR = PChar;
+  HPDF_Dict = HPDF_HANDLE;
+  HPDF_OutputIntent = HPDF_HANDLE;
   HPDF_STATUS = Cardinal;
 
 function HPDF_NewEx (user_error_fn: THPDF_ErrorFunc;
@@ -181,7 +182,7 @@ function HPDF_LoadTTFontFromFile (pdf: HPDF_Doc; const file_name: HPDF_PCHAR;
 
 
 function HPDF_LoadTTFontFromFile2 (pdf: HPDF_Doc; const file_name: HPDF_PCHAR;
-        index: HPDF_UINT; embedding: HPDF_BOOL): HPDF_CHAR;
+        index: HPDF_UINT; embedding: HPDF_BOOL): HPDF_PCHAR;
          stdcall external LIBHPDF_DLL;
 
 function HPDF_AddPageLabel (pdf: HPDF_Doc; page_num: HPDF_UINT;
@@ -840,6 +841,16 @@ function HPDF_Page_TextRect  (page: HPDF_Page; left: HPDF_REAL; top: HPDF_REAL;
 function HPDF_Page_SetSlideShow  (page: HPDF_Page; sstype: THPDF_TransitionStyle; 
         disp_time: HPDF_REAL; trans_time: HPDF_REAL): HPDF_STATUS; 
          stdcall external LIBHPDF_DLL;
+
+
+function HPDF_LoadIccProfileFromFile (pdf: HPDF_Doc; icc_file_name: HPDF_PCHAR;
+  numcomponent: Integer): HPDF_OutputIntent; stdcall external LIBHPDF_DLL;
+
+function HPDF_PDFA_AppendOutputIntents (pdf: HPDF_Doc; const iccname: HPDF_PCHAR;
+        iccdict: HPDF_Dict): HPDF_STATUS; stdcall external LIBHPDF_DLL;
+
+function HPDF_PDFA_SetPDFAConformance (pdf: HPDF_Doc;
+        pdfatype: THPDF_PDFA_TYPE): HPDF_STATUS; stdcall external LIBHPDF_DLL;		 
 
 implementation
 

@@ -28,11 +28,11 @@ begin
   raise Exception.Create(message);
 end;
 
-procedure draw_line (page: HPDF_Page; x: Single; y: Single; const text: PChar);
+procedure draw_line (page: HPDF_Page; x: Single; y: Single; const text: String);
 begin
   HPDF_Page_BeginText(page);
   HPDF_Page_MoveTextPos(page, x, y - 10);
-  HPDF_Page_ShowText(page, text);
+  HPDF_Page_ShowText(page, PUTF8Char(UTF8Encode(text)));
   HPDF_Page_EndText(page);
 
   HPDF_Page_MoveTo(page, x, y - 15);
@@ -40,11 +40,11 @@ begin
   HPDF_Page_Stroke(page);
 end;
 
-procedure draw_line2 (page: HPDF_Page; x: Single; y: Single; const text: PChar);
+procedure draw_line2 (page: HPDF_Page; x: Single; y: Single; const text: String);
 begin
   HPDF_Page_BeginText(page);
   HPDF_Page_MoveTextPos(page, x, y);
-  HPDF_Page_ShowText(page, text);
+  HPDF_Page_ShowText(page, PUTF8Char(UTF8Encode(text)));
   HPDF_Page_EndText(page);
 
   HPDF_Page_MoveTo(page, x + 30, y - 25);
@@ -52,11 +52,11 @@ begin
   HPDF_Page_Stroke(page);
 end;
 
-procedure draw_rect (page: HPDF_Page; x: Single; y: Single; const text: PChar);
+procedure draw_rect (page: HPDF_Page; x: Single; y: Single; const text: String);
 begin
   HPDF_Page_BeginText(page);
   HPDF_Page_MoveTextPos(page, x, y - 10);
-  HPDF_Page_ShowText(page, text);
+  HPDF_Page_ShowText(page, PUTF8Char(UTF8Encode(text)));
   HPDF_Page_EndText(page);
 
   HPDF_Page_Rectangle(page, x, y - 40, 220, 25);
@@ -114,14 +114,14 @@ begin
 
     {* print the title of the page (with positioning center). *}
     HPDF_Page_SetFontAndSize(page, font, 24);
-    tw := HPDF_Page_TextWidth(page, PChar(page_title));
+    tw := HPDF_Page_TextWidth(page, PUTF8Char(UTF8Encode(page_title)));
     HPDF_Page_BeginText(page);
 
     x := (HPDF_Page_GetWidth(page) - tw) / 2;
     y := HPDF_Page_GetHeight(page) - 50;
     HPDF_Page_MoveTextPos (page, x, y);
 
-    HPDF_Page_ShowText (page, PChar(page_title));
+    HPDF_Page_ShowText (page, PUTF8Char(UTF8Encode(page_title)));
     HPDF_Page_EndText (page);
 
     HPDF_Page_SetFontAndSize (page, font, 10);
@@ -347,7 +347,7 @@ begin
     HPDF_Page_Stroke (page);
 
     {* save the document to a file *}
-    HPDF_SaveToFile (pdf, PChar(fname));
+    HPDF_SaveToFile (pdf, PUTF8Char(UTF8Encode(fname)));
 
   except
     on e: Exception do

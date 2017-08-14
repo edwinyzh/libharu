@@ -53,7 +53,10 @@ type
 
 {*  8bit charactor types
  *}
-  HPDF_CHAR = char;
+{$IFDEF FPC}
+  UTF8Char = AnsiChar;
+{$ENDIF} 
+  HPDF_CHAR = UTF8Char;
 
 
 {*  8bit binary types
@@ -89,7 +92,10 @@ type
   HPDF_UNICODE = Word;
 
 {*  null terminated character *}
-  HPDF_PCHAR = PChar;
+{$IFDEF FPC}
+  PUTF8Char = PAnsiChar;  
+{$ENDIF}
+  HPDF_PCHAR = PUTF8Char;
 
 
 {*  HPDF_Box struct
@@ -148,6 +154,12 @@ type
     HPDF_INFO_EOF
   );
 
+{* PDF-A Types
+ *}
+  THPDF_PDFA_TYPE = (
+    HPDF_PDFA_1A = 0,
+    HPDF_PDFA_1B = 1
+  );
 
   THPDF_EncryptMode = (
     HPDF_ENCRYPT_R2,

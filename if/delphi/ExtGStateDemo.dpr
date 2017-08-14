@@ -28,7 +28,7 @@ begin
   raise Exception.Create(message);
 end;
 
-procedure draw_circles (page: HPDF_Page; const description: PChar; x: 
+procedure draw_circles (page: HPDF_Page; const description: String; x:
             HPDF_REAL; y: HPDF_REAL);
 begin
     HPDF_Page_SetLineWidth (page, 1.0);
@@ -45,7 +45,7 @@ begin
 
     HPDF_Page_SetRGBFill (page, 0.0, 0.0, 0.0);
     HPDF_Page_BeginText (page);
-    HPDF_Page_TextOut (page, x + 0.0, y + 130.0, description);
+    HPDF_Page_TextOut (page, x + 0.0, y + 130.0, PUTF8Char(UTF8Encode(description)));
     HPDF_Page_EndText (page);
 end;
 
@@ -191,7 +191,7 @@ begin
     HPDF_Page_GRestore (page);
 
     {* save the document to a file *}
-    HPDF_SaveToFile (pdf, PChar(fname));
+    HPDF_SaveToFile (pdf, PUTF8Char(UTF8Encode(fname)));
 
   except
     on e: Exception do
