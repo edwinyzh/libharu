@@ -464,11 +464,11 @@ type
 
 
 THPDF_ErrorFunc = procedure (error_no: HPDF_STATUS; detail_no: HPDF_STATUS;
-                user_data: Pointer); stdcall;
+                user_data: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$ENDIF};
 
-THPDF_AllocFunc = procedure (size: Cardinal); stdcall;
+THPDF_AllocFunc = procedure (size: Cardinal); {$IFDEF Linux}cdecl{$ELSE}stdcall{$ENDIF};
 
-THPDF_FreeFunc = procedure (aptr: Pointer); stdcall;
+THPDF_FreeFunc = procedure (aptr: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$ENDIF};
 
 implementation
 
