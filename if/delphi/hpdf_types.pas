@@ -20,7 +20,7 @@ uses
   SysUtils;
 
 type
-
+{$Z+}
 {*----------------------------------------------------------------------------*}
 {*----- type definition ------------------------------------------------------*}
 
@@ -461,7 +461,7 @@ type
     HPDF_TS_REPLACE,
     HPDF_TS_EOF
   );
-
+{$Z-}
 
 THPDF_ErrorFunc = procedure (error_no: HPDF_STATUS; detail_no: HPDF_STATUS;
                 user_data: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$ENDIF};
