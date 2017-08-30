@@ -1,7 +1,10 @@
 {*
- * << Haru Free PDF Library 2.0.6 >> -- hpdf_types.pas
+ * << Haru Free PDF Library >> -- hpdf_types.pas
+ *
+ * URL: http://libharu.org
  *
  * Copyright (c) 1999-2006 Takeshi Kanno <takeshi_kanno@est.hi-ho.ne.jp>
+ * Copyright (c) 2007-2009 Antony Dovgal <tony@daylessday.org>
  *
  * Permission to use, copy, modify, distribute and sell this software
  * and its documentation for any purpose is hereby granted without fee,
@@ -27,8 +30,10 @@ type
 
 {*  native OS integer types *}
   HPDF_INT = Integer;
+  HPDF_PINT = ^HPDF_INT;
   HPDF_UINT = Cardinal;
   HPDF_PUINT = ^Cardinal;
+
 
 {*  32bit integer types
  *}
@@ -44,25 +49,33 @@ type
   HPDF_PUINT16 = ^Word;
 
 
-
 {*  8bit integer types
  *}
   HPDF_INT8 = Shortint;
+  HPDF_PINT8 = ^HPDF_INT8;
   HPDF_UINT8 = Byte;
-
-
-{*  8bit charactor types
- *}
-{$IFDEF FPC}
-  UTF8Char = AnsiChar;
-{$ENDIF} 
-  HPDF_CHAR = UTF8Char;
+  HPDF_PUINT8 = ^HPDF_UINT8;
 
 
 {*  8bit binary types
  *}
   HPDF_BYTE = Byte;
   HPDF_PBYTE = ^Byte;
+
+
+{*  8bit charactor types
+ *}
+{$IFDEF FPC}
+  UTF8Char = AnsiChar;
+{$ENDIF}
+  HPDF_CHAR = UTF8Char;
+
+
+{*  null terminated character *}
+{$IFDEF FPC}
+  PUTF8Char = PAnsiChar;
+{$ENDIF}
+  HPDF_PCHAR = PUTF8Char;
 
 
 {*  float type (32bit IEEE754)
@@ -88,24 +101,14 @@ type
 
 {*  charactor-code type (16bit)
  *}
-  HPDF_CID = Word;
-  HPDF_UNICODE = Word;
-
-{*  null terminated character *}
-{$IFDEF FPC}
-  PUTF8Char = PAnsiChar;  
-{$ENDIF}
-  HPDF_PCHAR = PUTF8Char;
+  HPDF_CID = HPDF_UINT16;
+  HPDF_UNICODE = HPDF_UINT16;
 
 
-{*  HPDF_Box struct
+{*  charactor-code type (32bit)
  *}
-  THPDF_Box = packed record
-    left: HPDF_REAL;
-    bottom: HPDF_REAL;
-    right: HPDF_REAL;
-    top: HPDF_REAL;
-  end;
+  HPDF_UCS4 = HPDF_UINT32;
+  HPDF_CODE = HPDF_UINT32;
 
 
 {*  HPDF_Point struct
@@ -116,9 +119,6 @@ type
   end;
   PHPDF_Point = ^THPDF_Point;
 
-
-{*  HPDF_Rect struct
- *}
   THPDF_Rect = packed record
     left: HPDF_REAL;
     bottom: HPDF_REAL;
@@ -126,6 +126,15 @@ type
     top: HPDF_REAL;
   end;
 
+{*  HPDF_Point3D struct
+ *}
+  THPDF_Point3D = packed record
+    x: HPDF_REAL;
+    y: HPDF_REAL;
+    z: HPDF_REAL;
+  end;
+
+  THPDF_Box = THPDF_Rect;
 
 {* HPDF_Date struct
  *}
@@ -151,14 +160,26 @@ type
     HPDF_INFO_TITLE,
     HPDF_INFO_SUBJECT,
     HPDF_INFO_KEYWORDS,
+    HPDF_INFO_TRAPPED,
+    HPDF_INFO_GTS_PDFX,
     HPDF_INFO_EOF
   );
 
-{* PDF-A Types
- *}
+{* PDF-A Types *}
+
   THPDF_PDFA_TYPE = (
     HPDF_PDFA_1A = 0,
     HPDF_PDFA_1B = 1
+  );
+
+  THPDF_PdfVer = (
+    HPDF_VER_12 = 0,
+    HPDF_VER_13,
+    HPDF_VER_14,
+    HPDF_VER_15,
+    HPDF_VER_16,
+    HPDF_VER_17,
+    HPDF_VER_EOF
   );
 
   THPDF_EncryptMode = (
@@ -167,6 +188,13 @@ type
   );
 
 
+THPDF_Error_Handler = procedure (error_no: HPDF_STATUS; detail_no: HPDF_STATUS;
+                user_data: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$ENDIF};
+
+THPDF_Alloc_Func = procedure (size: HPDF_UINT); {$IFDEF Linux}cdecl{$ELSE}stdcall{$ENDIF};
+
+
+THPDF_Free_Func = procedure (aptr: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$ENDIF};
 
 
 {*---------------------------------------------------------------------------*}
@@ -177,6 +205,18 @@ type
     numwords: HPDF_UINT;   {* don't use this value. *}
     width: HPDF_UINT;
     numspace: HPDF_UINT;
+  end;
+
+
+  THPDF_TextLineWidth = packed record
+    flags: HPDF_UINT16;
+    linebytes: HPDF_UINT16;
+    numbytes: HPDF_UINT16;
+    numchars: HPDF_UINT16;
+    numspaces: HPDF_UINT16;
+    numtatweels: HPDF_UINT16;
+    charswidth: HPDF_UINT;
+    width: HPDF_REAL;
   end;
 
 
@@ -202,6 +242,23 @@ type
     y: HPDF_REAL;
   end;
 
+{*---------------------------------------------------------------------------*}
+{*----- HPDF_3DMatrix struct ------------------------------------------------*}
+
+  THPDF_3DMatrix = packed record
+    a: HPDF_REAL;
+    b: HPDF_REAL;
+    c: HPDF_REAL;
+    d: HPDF_REAL;
+    e: HPDF_REAL;
+    f: HPDF_REAL;
+    g: HPDF_REAL;
+    h: HPDF_REAL;
+    i: HPDF_REAL;
+    tx: HPDF_REAL;
+    ty: HPDF_REAL;
+    tz: HPDF_REAL;
+  end;
 
 {*---------------------------------------------------------------------------*}
 
@@ -227,6 +284,7 @@ type
     r: HPDF_REAL;
     g: HPDF_REAL;
     b: HPDF_REAL;
+    constructor Create(Ar, Ag, Ab: HPDF_REAL);
   end;
 
 {*---------------------------------------------------------------------------*}
@@ -237,6 +295,7 @@ type
     m: HPDF_REAL;
     y: HPDF_REAL;
     k: HPDF_REAL;
+    constructor Create(Ac, Am, Ay, Ak: HPDF_REAL);
   end;
 
 {*---------------------------------------------------------------------------*}
@@ -245,7 +304,8 @@ type
   THPDF_LineCap = (
     HPDF_BUTT_END,
     HPDF_ROUND_END,
-    HPDF_PROJECTING_SCUARE_END
+    HPDF_PROJECTING_SCUARE_END,
+    HPDF_LINECAP_EOF
   );
 
 {*----------------------------------------------------------------------------*}
@@ -275,7 +335,10 @@ type
 
   THPDF_WritingMode = (
     HPDF_WMODE_HORIZONTAL,
-    HPDF_WMODE_VERTICAL
+    HPDF_WMODE_VERTICAL,
+    HPDF_WMODE_SIDEWAYS,        {* gstate only *}
+    HPDF_WMODE_MIXED,           {* gstate only *}
+    HPDF_WMODE_EOF
   );
 
 
@@ -283,7 +346,10 @@ type
     HPDF_PAGE_LAYOUT_SINGLE,
     HPDF_PAGE_LAYOUT_ONE_COLUMN,
     HPDF_PAGE_LAYOUT_TWO_COLUMN_LEFT,
-    HPDF_PAGE_LAYOUT_TWO_COLUMN_RIGHT
+    HPDF_PAGE_LAYOUT_TWO_COLUMN_RIGHT,
+    HPDF_PAGE_LAYOUT_TWO_PAGE_LEFT,
+    HPDF_PAGE_LAYOUT_TWO_PAGE_RIGHT,
+    HPDF_PAGE_LAYOUT_EOF
   );
 
 
@@ -291,10 +357,11 @@ type
     HPDF_PAGE_MODE_USE_NONE,
     HPDF_PAGE_MODE_USE_OUTLINE,
     HPDF_PAGE_MODE_USE_THUMBS,
-    HPDF_PAGE_MODE_FULL_SCREEN
+    HPDF_PAGE_MODE_FULL_SCREEN,
 {*  HPDF_PAGE_MODE_USE_OC,
     HPDF_PAGE_MODE_USE_ATTACHMENTS
  *}
+    HPDF_PAGE_MODE_EOF
   );
 
 
@@ -303,7 +370,8 @@ type
     HPDF_PAGE_NUM_STYLE_UPPER_ROMAN,
     HPDF_PAGE_NUM_STYLE_LOWER_ROMAN,
     HPDF_PAGE_NUM_STYLE_UPPER_LETTERS,
-    HPDF_PAGE_NUM_STYLE_LOWER_LETTERS
+    HPDF_PAGE_NUM_STYLE_LOWER_LETTERS,
+    HPDF_PAGE_NUM_STYLE_EOF
   );
 
 
@@ -333,7 +401,12 @@ type
     HPDF_ANNOT_UNDERLINE,
     HPDF_ANNOT_INK,
     HPDF_ANNOT_FILE_ATTACHMENT,
-    HPDF_ANNOT_POPUP
+    HPDF_ANNOT_POPUP,
+    HPDF_ANNOT_3D,
+    HPDF_ANNOT_SQUIGGLY,
+    HPDF_ANNOT_LINE,
+    HPDF_ANNOT_PROJECTION,
+    HPDF_ANNOT_WIDGET
   );
 
 
@@ -352,7 +425,8 @@ type
     HPDF_ANNOT_NO_HIGHTLIGHT,
     HPDF_ANNOT_INVERT_BOX,
     HPDF_ANNOT_INVERT_BORDER,
-    HPDF_ANNOT_DOWN_APPEARANCE
+    HPDF_ANNOT_DOWN_APPEARANCE,
+    HPDF_ANNOT_HIGHTLIGHT_MODE_EOF
   );
 
 
@@ -363,9 +437,54 @@ type
     HPDF_ANNOT_ICON_HELP,
     HPDF_ANNOT_ICON_NEW_PARAGRAPH,
     HPDF_ANNOT_ICON_PARAGRAPH,
-    HPDF_ANNOT_ICON_INSERT
+    HPDF_ANNOT_ICON_INSERT,
+    HPDF_ANNOT_ICON_EOF
   );
 
+  THPDF_AnnotIntent = (
+    HPDF_ANNOT_INTENT_FREETEXTCALLOUT,
+    HPDF_ANNOT_INTENT_FREETEXTTYPEWRITER,
+    HPDF_ANNOT_INTENT_LINEARROW,
+    HPDF_ANNOT_INTENT_LINEDIMENSION,
+    HPDF_ANNOT_INTENT_POLYGONCLOUD,
+    HPDF_ANNOT_INTENT_POLYLINEDIMENSION,
+    HPDF_ANNOT_INTENT_POLYGONDIMENSION
+  );
+
+  THPDF_LineAnnotEndingStyle = (
+    HPDF_LINE_ANNOT_NONE,
+    HPDF_LINE_ANNOT_SQUARE,
+    HPDF_LINE_ANNOT_CIRCLE,
+    HPDF_LINE_ANNOT_DIAMOND,
+    HPDF_LINE_ANNOT_OPENARROW,
+    HPDF_LINE_ANNOT_CLOSEDARROW,
+    HPDF_LINE_ANNOT_BUTT,
+    HPDF_LINE_ANNOT_ROPENARROW,
+    HPDF_LINE_ANNOT_RCLOSEDARROW,
+    HPDF_LINE_ANNOT_SLASH
+  );
+
+  THPDF_LineAnnotCapPosition = (
+    HPDF_LINE_ANNOT_CAP_INLINE,
+    HPDF_LINE_ANNOT_CAP_TOP
+  );
+
+  THPDF_StampAnnotName = (
+    HPDF_STAMP_ANNOT_APPROVED,
+    HPDF_STAMP_ANNOT_EXPERIMENTAL,
+    HPDF_STAMP_ANNOT_NOTAPPROVED,
+    HPDF_STAMP_ANNOT_ASIS,
+    HPDF_STAMP_ANNOT_EXPIRED,
+    HPDF_STAMP_ANNOT_NOTFORPUBLICRELEASE,
+    HPDF_STAMP_ANNOT_CONFIDENTIAL,
+    HPDF_STAMP_ANNOT_FINAL,
+    HPDF_STAMP_ANNOT_SOLD,
+    HPDF_STAMP_ANNOT_DEPARTMENTAL,
+    HPDF_STAMP_ANNOT_FORCOMMENT,
+    HPDF_STAMP_ANNOT_TOPSECRET,
+    HPDF_STAMP_ANNOT_DRAFT,
+    HPDF_STAMP_ANNOT_FORPUBLICRELEASE
+  );
 
 {*----------------------------------------------------------------------------*}
 {*------ border stype --------------------------------------------------------*}
@@ -379,50 +498,7 @@ type
   );
 
 
-  THPDF_PageSizes = (
-    HPDF_PAGE_SIZE_LETTER,
-    HPDF_PAGE_SIZE_LEGAL,
-    HPDF_PAGE_SIZE_A3,
-    HPDF_PAGE_SIZE_A4,
-    HPDF_PAGE_SIZE_A5,
-    HPDF_PAGE_SIZE_B5,
-    HPDF_PAGE_SIZE_EXECUTIVE,
-    HPDF_PAGE_SIZE_US4x6,
-    HPDF_PAGE_SIZE_US4x8,
-    HPDF_PAGE_SIZE_US5x7,
-    HPDF_PAGE_SIZE_COMM10
-  );
-
-
-  THPDF_PageDirection = (
-    HPDF_PAGE_PORTRAIT,
-    HPDF_PAGE_LANDSCAPE
-  );
-
-
-  THPDF_EncoderType = (
-    HPDF_ENCODER_TYPE_SINGLE_BYTE,
-    HPDF_ENCODER_TYPE_DOUBLE_BYTE,
-    HPDF_ENCODER_TYPE_UNINITIALIZED,
-    HPDF_ENCODER_UNKNOWN
-  );
-
-
-  THPDF_ByteType = (
-    HPDF_BYTE_TYPE_SINGLE,
-    HPDF_BYTE_TYPE_LEAD,
-    HPDF_BYTE_TYPE_TRIAL,
-    HPDF_BYTE_TYPE_UNKNOWN
-  );
-
-
-  THPDF_TextAlignment = (
-    HPDF_TALIGN_LEFT,
-    HPDF_TALIGN_RIGHT,
-    HPDF_TALIGN_CENTER,
-    HPDF_TALIGN_JUSTIFY
-  );
-
+{*----- blend modes ----------------------------------------------------------*}
 
   THPDF_BlendMode = (
     HPDF_BM_NORMAL,
@@ -440,6 +516,7 @@ type
     HPDF_BM_EOF
   );
 
+{*----- slide show -----------------------------------------------------------*}
 
   THPDF_TransitionStyle = (
     HPDF_TS_WIPE_RIGHT,
@@ -461,15 +538,144 @@ type
     HPDF_TS_REPLACE,
     HPDF_TS_EOF
   );
+
+{*----------------------------------------------------------------------------*}
+
+  THPDF_PageSizes = (
+    HPDF_PAGE_SIZE_LETTER,
+    HPDF_PAGE_SIZE_LEGAL,
+    HPDF_PAGE_SIZE_A3,
+    HPDF_PAGE_SIZE_A4,
+    HPDF_PAGE_SIZE_A5,
+    HPDF_PAGE_SIZE_B5,
+    HPDF_PAGE_SIZE_EXECUTIVE,
+    HPDF_PAGE_SIZE_US4x6,
+    HPDF_PAGE_SIZE_US4x8,
+    HPDF_PAGE_SIZE_US5x7,
+    HPDF_PAGE_SIZE_COMM10,
+    HPDF_PAGE_SIZE_EOF
+  );
+
+
+  THPDF_PageDirection = (
+    HPDF_PAGE_PORTRAIT,
+    HPDF_PAGE_LANDSCAPE
+  );
+
+
+  THPDF_EncoderType = (
+    HPDF_ENCODER_TYPE_SINGLE_BYTE,
+    HPDF_ENCODER_TYPE_MULTI_BYTE,
+    {* obsoleted *} HPDF_ENCODER_TYPE_DOUBLE_BYTE
+        = HPDF_ENCODER_TYPE_MULTI_BYTE,
+    HPDF_ENCODER_TYPE_UNINITIALIZED,
+    HPDF_ENCODER_UNKNOWN
+  );
+
+
+  THPDF_ByteType = (
+    HPDF_BYTE_TYPE_SINGLE,
+    HPDF_BYTE_TYPE_LEAD,
+    HPDF_BYTE_TYPE_TRIAL,
+    HPDF_BYTE_TYPE_UNKNOWN
+  );
+
+
+  THPDF_TextAlignment = (
+    HPDF_TALIGN_LEFT                  =         0,
+    HPDF_TALIGN_RIGHT                 =         1,
+    HPDF_TALIGN_CENTER                =         2,
+    HPDF_TALIGN_JUSTIFY               =         3,
+    HPDF_TALIGN_STRETCH               =         4,
+    HPDF_TALIGN_JUSTIFY_ALL           =       $83,
+    HPDF_TALIGN_STRETCH_ALL           =       $84,
+    HPDF_TALIGN_MASK                  =       $FF,
+    HPDF_VALIGN_TOP                   =     $0000,
+    HPDF_VALIGN_BOTTOM                =     $0100,
+    HPDF_VALIGN_CENTER                =     $0200,
+    HPDF_VALIGN_JUSTIFY               =     $0300,
+    HPDF_VALIGN_STRETCH               =     $0400,
+    HPDF_VALIGN_JUSTIFY_ALL           =     $8300,
+    HPDF_VALIGN_STRETCH_ALL           =     $8400,
+    HPDF_VALIGN_MASK                  =     $FF00,
+    HPDF_ALIGNOPT_BIDI_EACH_PARAGRAPH = $40000000,
+    HPDF_ALIGNOPT_REMOVE_TATWEEL      = $20000000
+  );
+
+{*----------------------------------------------------------------------------*}
+
+{* Name Dictionary values -- see PDF reference section 7.7.4 *}
+  THPDF_NameDictKey = (
+    HPDF_NAME_EMBEDDED_FILES = 0,    {* TODO the rest *}
+    HPDF_NAME_EOF
+  );
+
+
+{*----------------------------------------------------------------------------*}
+{*----- text converter -------------------------------------------------------*}
+
+
+  THPDF_CharEnc  = (
+    HPDF_CHARENC_UNSUPPORTED = 0,
+    HPDF_CHARENC_UTF8,
+    HPDF_CHARENC_UTF16BE,
+    HPDF_CHARENC_UTF32BE,
+    HPDF_CHARENC_UTF16LE,
+    HPDF_CHARENC_UTF32LE,
+    HPDF_CHARENC_UNICODE,       {* UTF16 native endian *}
+    HPDF_CHARENC_UCS4,          {* UTF32 native endian *}
+    HPDF_CHARENC_WCHAR_T,       {* UNICODE or UCS4 *}
+    HPDF_CHARENC_EOF
+  );
+
+  HPDF_Converter = ^THPDF_Converter_Rec;
+
+  THPDF_Converter_New_Func = function (alloc_fn: THPDF_Alloc_Func; free_fn: THPDF_Free_Func; param: Pointer):
+    HPDF_Converter; {$IFDEF Linux}cdecl{$ELSE}stdcall{$ENDIF};
+
+
+  THPDF_Converter_Convert_Func = function (converter: HPDF_Converter; flags: HPDF_UINT32;
+    const src: HPDF_PBYTE; src_bytes: HPDF_UINT; dst: HPDF_PBYTE): HPDF_UINT; {$IFDEF Linux}cdecl{$ELSE}stdcall{$ENDIF};
+
+
+  THPDF_Converter_Delete_Func = function (converter: HPDF_Converter; free_fn: THPDF_Free_Func): HPDF_Converter;
+    {$IFDEF Linux}cdecl{$ELSE}stdcall{$ENDIF};
+
+  THPDF_Converter_Rec = packed record
+    convert_fn: THPDF_Converter_Convert_Func;
+    delete_fn: THPDF_Converter_Delete_Func;
+    src_charenc: THPDF_CharEnc;
+    dst_charenc: THPDF_CharEnc;
+    bytes_factor: HPDF_UINT;
+    chars_factor: HPDF_UINT;
+  end;
+
+  THPDF_ConverterBiDi_Param_Rec = packed record
+    max_chars: HPDF_UINT32;
+    base_dir: HPDF_UINT32;
+    bidi_types: HPDF_PUINT32;
+    ar_props: HPDF_PUINT8;
+    embedding_levels: HPDF_PINT8;
+    positions_L_to_V: HPDF_PINT;
+    positions_V_to_L: HPDF_PINT;
+  end;
 {$Z-}
 
-THPDF_ErrorFunc = procedure (error_no: HPDF_STATUS; detail_no: HPDF_STATUS;
-                user_data: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$ENDIF};
-
-THPDF_AllocFunc = procedure (size: Cardinal); {$IFDEF Linux}cdecl{$ELSE}stdcall{$ENDIF};
-
-THPDF_FreeFunc = procedure (aptr: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$ENDIF};
-
 implementation
+
+constructor THPDF_RGBColor.Create(Ar, Ag, Ab: HPDF_REAL);
+begin
+  r := Ar;
+  g := Ag;
+  b := Ab;
+end;
+
+constructor THPDF_CMYKColor.Create(Ac, Am, Ay, Ak: HPDF_REAL);
+begin
+  c := Ac;
+  m := Am;
+  y := Ay;
+  k := Ak;
+end;
 
 end.
