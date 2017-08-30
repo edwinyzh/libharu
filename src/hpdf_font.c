@@ -310,6 +310,8 @@ MeasureTextCache  (HPDF_Font           font,
     HPDF_REAL hyphen_w = 0;
     HPDF_UINT bytes;
     HPDF_UINT tw;
+    HPDF_UINT prev_nch, prev_nsp, prev_ntt, prev_tw;
+    HPDF_REAL prev_w;
 
     HPDF_PTRACE ((" MeasureTextEx\n"));
 
@@ -419,6 +421,12 @@ MeasureTextCache  (HPDF_Font           font,
 
         tmp_w = (HPDF_REAL)cw * font_size / 1000;
 
+        prev_nch = nch;
+        prev_nsp = nsp;
+        prev_ntt = ntt;
+        prev_tw = tw;
+        prev_w = w;
+
         if (b == 0x0640) {      /* Arabic tatweel */
             ntt++;
             if (options & HPDF_MEASURE_IGNORE_TATWEEL) {
@@ -440,8 +448,19 @@ MeasureTextCache  (HPDF_Font           font,
         }
 
         if (line_width < v ||
-                (!(options & HPDF_MEASURE_CAN_SHORTEN) && line_width < w))
+            (!(options & HPDF_MEASURE_CAN_SHORTEN) && line_width < w))
+        {
+            if (width->width == 0) {
+                width->linebytes = i;
+                width->numbytes = i;
+                width->numchars = prev_nch;
+                width->numspaces = prev_nsp;
+                width->numtatweels = prev_ntt;
+                width->charswidth = prev_tw;
+                width->width = prev_w;
+            }
             return (width->flags |= HPDF_TLW_WORD_WRAP);
+        }
     }
 
     /* all of text can be put in the specified width */
@@ -1252,7 +1271,7 @@ HPDF_Font_ConvertText  (HPDF_Font        font,
     HPDF_List list;
     HPDF_Converter converter;
     HPDF_UINT bytes_factor, chars_factor, allocated, i;
-    HPDF_BYTE *dst;
+    HPDF_BYTE *dst = NULL;
 
     HPDF_PTRACE((" HPDF_Font_ConvertText\n"));
 
@@ -1318,6 +1337,8 @@ HPDF_Font_ConvertText  (HPDF_Font        font,
     /* set relief font index */
     if (attr->relief_font)
         SetReliefFontIndex (font);
+    else
+        HPDF_MemSet (attr->text_cache + (attr->text_cache_allocated / 2), 0, attr->text_cache_allocated - (attr->text_cache_allocated / 2));
 
     /* remove control character */
     if (!(flags & HPDF_CONVERT_HOLD_CHARACTERS)) {
