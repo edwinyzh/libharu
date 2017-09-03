@@ -128,7 +128,7 @@ int main (int argc, char **argv)
 
     /* load GrayScale raw-image (1bit) file from memory. */
     image = HPDF_LoadRawImageFromMem (pdf, RAW_IMAGE_DATA, 32, 32,
-                HPDF_CS_DEVICE_GRAY, 1);
+                HPDF_CS_DEVICE_GRAY, 1, 128, HPDF_TRUE);
 
     x = 120;
     y = 20;
