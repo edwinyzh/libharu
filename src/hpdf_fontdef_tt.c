@@ -140,6 +140,14 @@ static HPDF_STATUS
 ParseHmtx  (HPDF_FontDef  fontdef);
 
 
+static HPDF_BOOL 
+ParseCFF  (HPDF_FontDef  fontdef);
+
+
+static HPDF_STATUS 
+InitGlyphTbl (HPDF_FontDef  fontdef);
+
+
 static HPDF_STATUS
 ParseLoca  (HPDF_FontDef  fontdef);
 
@@ -156,6 +164,10 @@ ParseName  (HPDF_FontDef  fontdef);
 
 static HPDF_STATUS
 ParseOS2  (HPDF_FontDef  fontdef);
+
+
+static HPDF_STATUS
+ParsePost  (HPDF_FontDef  fontdef);
 
 
 static HPDF_TTFTable*
@@ -256,7 +268,7 @@ HPDF_TTFontDef_New (HPDF_MMgr   mmgr)
     if (!mmgr)
         return NULL;
 
-    fontdef = HPDF_GetMem (mmgr, sizeof(HPDF_FontDef_Rec));
+    fontdef = (HPDF_FontDef)HPDF_GetMem (mmgr, sizeof(HPDF_FontDef_Rec));
     if (!fontdef)
         return NULL;
 
@@ -268,7 +280,7 @@ HPDF_TTFontDef_New (HPDF_MMgr   mmgr)
     fontdef->clean_fn = CleanFunc;
     fontdef->free_fn = FreeFunc;
 
-    fontdef_attr = HPDF_GetMem (mmgr, sizeof(HPDF_TTFontDefAttr_Rec));
+    fontdef_attr = (HPDF_TTFontDefAttr)HPDF_GetMem (mmgr, sizeof(HPDF_TTFontDefAttr_Rec));
     if (!fontdef_attr) {
         HPDF_FreeMem (fontdef->mmgr, fontdef);
         return NULL;
@@ -414,6 +426,7 @@ LoadFontData (HPDF_FontDef  fontdef,
     HPDF_TTFontDefAttr attr = (HPDF_TTFontDefAttr)fontdef->attr;
     HPDF_STATUS ret;
     HPDF_TTFTable *tbl;
+    HPDF_BOOL bCFF;
 
     HPDF_PTRACE ((" HPDF_TTFontDef_LoadFontData\n"));
 
@@ -445,8 +458,14 @@ LoadFontData (HPDF_FontDef  fontdef,
     if ((ret = ParseHmtx (fontdef)) != HPDF_OK)
         return ret;
 
-    if ((ret = ParseLoca (fontdef)) != HPDF_OK)
-        return ret;
+    bCFF = ParseCFF(fontdef);    
+    if ((ret = InitGlyphTbl (fontdef)) != HPDF_OK)
+         return ret;
+    if (!bCFF)
+    {
+        if ((ret = ParseLoca (fontdef)) != HPDF_OK)
+            return ret;
+    }
 
     if ((ret = ParseName (fontdef)) != HPDF_OK)
         return ret;
@@ -454,17 +473,35 @@ LoadFontData (HPDF_FontDef  fontdef,
     if ((ret = ParseOS2 (fontdef)) != HPDF_OK)
         return ret;
 
-    tbl = FindTable (fontdef, "glyf");
-    if (!tbl)
-        return HPDF_SetError (fontdef->error, HPDF_TTF_MISSING_TABLE, 4);
+    if ((ret = ParsePost (fontdef)) != HPDF_OK)
+        return ret;
 
-    attr->glyph_tbl.base_offset = tbl->offset;
-    fontdef->cap_height =
-                (HPDF_UINT16)HPDF_TTFontDef_GetCharBBox (fontdef, (HPDF_UINT16)'H').top;
-    fontdef->x_height =
-                (HPDF_UINT16)HPDF_TTFontDef_GetCharBBox (fontdef, (HPDF_UINT16)'x').top;
-    fontdef->missing_width = (HPDF_INT16)((HPDF_UINT32)attr->h_metric[0].advance_width * 1000 /
-                attr->header.units_per_em);
+    if (!bCFF) {
+        tbl = FindTable (fontdef, "glyf");
+        if (!tbl)
+            return HPDF_SetError (fontdef->error, HPDF_TTF_MISSING_TABLE, 4);
+
+        attr->glyph_tbl.base_offset = tbl->offset;
+        fontdef->stemv = 80;
+        fontdef->cap_height = (HPDF_UINT16)HPDF_TTFontDef_GetCharBBox (fontdef, (HPDF_UINT16)'H').top;
+        fontdef->x_height = (HPDF_UINT16)HPDF_TTFontDef_GetCharBBox (fontdef, (HPDF_UINT16)'x').top;
+        fontdef->missing_width = (HPDF_UINT32)attr->h_metric[0].advance_width * 1000 / attr->header.units_per_em;
+    }
+
+    if (fontdef->ascent == 0) {
+        fontdef->ascent = attr->typo_ascender;
+        fontdef->descent = attr->typo_descender;
+        fontdef->line_gap = attr->typo_linegap;
+    }    
+
+    if (fontdef->descent >= 0)
+        fontdef->descent = -fontdef->descent;
+
+
+    if (fontdef->underline_position == 0)
+        fontdef->underline_position = (attr->underline_position >= 0)? attr->underline_position : -attr->underline_position;
+    if (fontdef->underline_thickness == 0)
+        fontdef->underline_thickness = attr->underline_thickness;
 
     HPDF_PTRACE ((" fontdef->cap_height=%d\n", fontdef->cap_height));
     HPDF_PTRACE ((" fontdef->x_height=%d\n", fontdef->x_height));
@@ -712,7 +749,7 @@ LoadTTFTable (HPDF_FontDef  fontdef)
             HPDF_TTF_MAX_MEM_SIZ)
         return HPDF_SetError (fontdef->error, HPDF_TTF_INVALID_FOMAT, 0);
 
-    attr->offset_tbl.table = HPDF_GetMem (fontdef->mmgr,
+    attr->offset_tbl.table = (HPDF_TTFTable*)HPDF_GetMem (fontdef->mmgr,
                         sizeof(HPDF_TTFTable) * attr->offset_tbl.num_tables);
     if (!attr->offset_tbl.table)
         return HPDF_Error_GetCode (fontdef->error);
@@ -845,6 +882,9 @@ ParseHhea (HPDF_FontDef  fontdef)
     ret += GetINT16 (attr->stream, &fontdef->descent);
     fontdef->descent = (HPDF_INT16)((HPDF_INT32)fontdef->descent * 1000 /
                 attr->header.units_per_em);
+    ret += GetINT16 (attr->stream, &fontdef->line_gap);
+    fontdef->line_gap = (HPDF_INT16)((HPDF_INT32)fontdef->line_gap * 1000 / 
+                attr->header.units_per_em);
 
     if (ret != HPDF_OK)
         return HPDF_Error_GetCode (fontdef->error);
@@ -874,6 +914,7 @@ ParseCMap (HPDF_FontDef  fontdef)
     HPDF_UINT16 num_cmap;
     HPDF_UINT i;
     HPDF_UINT32 ms_unicode_encoding_offset = 0;
+    HPDF_UINT32 up_unicode_encoding_offset = 0;
     HPDF_UINT32 byte_encoding_offset = 0;
 
     HPDF_PTRACE ((" HPDF_TTFontDef_ParseCMap\n"));
@@ -933,8 +974,12 @@ ParseCMap (HPDF_FontDef  fontdef)
         }
 
         /* Byte-Encoding-CMAP will be used if MS-Unicode-CMAP is not found */
-        if (platformID == 1 && encodingID ==0 && format == 1)
+        if (platformID == 1 && encodingID ==0 && format == 0)  // format 1 does not exist (!), see http://www.microsoft.com/typography/otspec/cmap.htm
             byte_encoding_offset = offset;
+
+        /* Unicode-Unicode-CMAP will be used if MS-Unicode-CMAP is not found */
+        if (platformID == 0 && encodingID == 3 && format == 4)
+            up_unicode_encoding_offset = offset;
 
         ret = HPDF_Stream_Seek (attr->stream, save_offset, HPDF_SEEK_SET);
         if (ret != HPDF_OK)
@@ -948,6 +993,9 @@ ParseCMap (HPDF_FontDef  fontdef)
     } else if (byte_encoding_offset != 0) {
         HPDF_PTRACE((" found byte encoding cmap.\n"));
         ret = ParseCMAP_format0(fontdef, byte_encoding_offset + tbl->offset);
+    } else if (up_unicode_encoding_offset != 0) {
+        HPDF_PTRACE((" found unicode platform unicode encoding cmap.\n"));
+        ret = ParseCMAP_format4(fontdef, up_unicode_encoding_offset + tbl->offset);
     } else {
         HPDF_PTRACE((" cannot found target cmap.\n"));
         return HPDF_SetError (fontdef->error, HPDF_TTF_INVALID_FOMAT, 0);
@@ -990,16 +1038,15 @@ ParseCMAP_format0  (HPDF_FontDef  fontdef,
         return ret;
 
     attr->cmap.glyph_id_array_count = 256;
-    attr->cmap.glyph_id_array = HPDF_GetMem (fontdef->mmgr,
+    attr->cmap.glyph_id_array = (HPDF_UINT16*)HPDF_GetMem (fontdef->mmgr,
             sizeof (HPDF_UINT16) * 256);
     if (!attr->cmap.glyph_id_array)
         return HPDF_Error_GetCode (fontdef->error);
 
     parray = attr->cmap.glyph_id_array;
     for (i = 0; i < 256; i++) {
-        *parray = attr->cmap.glyph_id_array[i];
-        HPDF_PTRACE((" ParseCMAP_format0 glyph_id_array[%d]=%u\n",
-                    i, *parray));
+        *parray = array[i];
+        HPDF_PTRACE((" ParseCMAP_format0 glyph_id_array[%d]=%u\n", i, *parray));
         parray++;
     }
 
@@ -1046,7 +1093,7 @@ ParseCMAP_format4  (HPDF_FontDef  fontdef,
         return HPDF_Error_GetCode (fontdef->error);
 
     /* end_count */
-    attr->cmap.end_count = HPDF_GetMem (fontdef->mmgr,
+    attr->cmap.end_count = (HPDF_UINT16*)HPDF_GetMem (fontdef->mmgr,
             sizeof(HPDF_UINT16) * attr->cmap.seg_count_x2 / 2);
     if (!attr->cmap.end_count)
         return HPDF_Error_GetCode (fontdef->error);
@@ -1060,7 +1107,7 @@ ParseCMAP_format4  (HPDF_FontDef  fontdef,
         return ret;
 
     /* start_count */
-    attr->cmap.start_count = HPDF_GetMem (fontdef->mmgr,
+    attr->cmap.start_count = (HPDF_UINT16*)HPDF_GetMem (fontdef->mmgr,
             sizeof(HPDF_UINT16) * attr->cmap.seg_count_x2 / 2);
     if (!attr->cmap.start_count)
         return HPDF_Error_GetCode (fontdef->error);
@@ -1071,7 +1118,7 @@ ParseCMAP_format4  (HPDF_FontDef  fontdef,
             return ret;
 
     /* id_delta */
-    attr->cmap.id_delta = HPDF_GetMem (fontdef->mmgr,
+    attr->cmap.id_delta = (HPDF_INT16*)HPDF_GetMem (fontdef->mmgr,
             sizeof(HPDF_UINT16) * attr->cmap.seg_count_x2 / 2);
     if (!attr->cmap.id_delta)
         return HPDF_Error_GetCode (fontdef->error);
@@ -1082,7 +1129,7 @@ ParseCMAP_format4  (HPDF_FontDef  fontdef,
             return ret;
 
     /* id_range_offset */
-    attr->cmap.id_range_offset = HPDF_GetMem (fontdef->mmgr,
+    attr->cmap.id_range_offset = (HPDF_UINT16*)HPDF_GetMem (fontdef->mmgr,
             sizeof(HPDF_UINT16) * attr->cmap.seg_count_x2 / 2);
     if (!attr->cmap.id_range_offset)
         return HPDF_Error_GetCode (fontdef->error);
@@ -1100,7 +1147,7 @@ ParseCMAP_format4  (HPDF_FontDef  fontdef,
 
     if (attr->cmap.glyph_id_array_count > 0) {
         /* glyph_id_array */
-        attr->cmap.glyph_id_array = HPDF_GetMem (fontdef->mmgr,
+        attr->cmap.glyph_id_array = (HPDF_UINT16*)HPDF_GetMem (fontdef->mmgr,
                 sizeof(HPDF_UINT16) * attr->cmap.glyph_id_array_count);
         if (!attr->cmap.glyph_id_array)
             return HPDF_Error_GetCode (fontdef->error);
@@ -1356,7 +1403,7 @@ ParseHmtx  (HPDF_FontDef  fontdef)
     /* allocate memory for a table of holizontal matrix.
      * the count of metric records is same as the number of glyphs
      */
-    attr->h_metric = HPDF_GetMem (fontdef->mmgr,
+    attr->h_metric = (HPDF_TTF_LongHorMetric*)HPDF_GetMem (fontdef->mmgr,
         sizeof (HPDF_TTF_LongHorMetric) * attr->num_glyphs);
 
     if (!attr->h_metric)
@@ -1392,6 +1439,51 @@ ParseHmtx  (HPDF_FontDef  fontdef)
     return HPDF_OK;
 }
 
+
+static HPDF_BOOL 
+ParseCFF  (HPDF_FontDef  fontdef)
+{
+    HPDF_TTFontDefAttr attr = (HPDF_TTFontDefAttr)fontdef->attr;
+    HPDF_TTFTable *tbl = FindTable (fontdef, "CFF ");
+    if (!tbl)
+        return HPDF_FALSE;
+
+    attr->cff_offset = tbl->offset;
+    attr->cff_length = tbl->length;
+    return HPDF_TRUE;
+}
+
+
+static HPDF_STATUS InitGlyphTbl (HPDF_FontDef  fontdef)
+{
+    HPDF_TTFontDefAttr attr = (HPDF_TTFontDefAttr)fontdef->attr;
+
+    /* allocate glyph-offset-table. */
+    attr->glyph_tbl.offsets = (HPDF_UINT32*)HPDF_GetMem (fontdef->mmgr,
+        sizeof (HPDF_UINT32) * (attr->num_glyphs + 1));
+
+    if (!attr->glyph_tbl.offsets)
+        return HPDF_Error_GetCode (fontdef->error);
+
+    HPDF_MemSet (attr->glyph_tbl.offsets, 0,
+            sizeof (HPDF_UINT32) * (attr->num_glyphs + 1));
+
+    /* allocate glyph-flg-table.
+     * this flgs are used to judge whether glyphs should be embedded.
+     */
+    attr->glyph_tbl.flgs = (HPDF_BYTE*)HPDF_GetMem (fontdef->mmgr,
+        sizeof (HPDF_BYTE) * attr->num_glyphs);
+
+    if (!attr->glyph_tbl.flgs)
+        return HPDF_Error_GetCode (fontdef->error);
+
+    HPDF_MemSet (attr->glyph_tbl.flgs, 0,
+        sizeof (HPDF_BYTE) * attr->num_glyphs);
+    attr->glyph_tbl.flgs[0] = 1;
+    return HPDF_OK;
+}
+
+
 static HPDF_STATUS
 ParseLoca  (HPDF_FontDef  fontdef)
 {
@@ -1409,29 +1501,6 @@ ParseLoca  (HPDF_FontDef  fontdef)
     ret = HPDF_Stream_Seek (attr->stream, tbl->offset, HPDF_SEEK_SET);
     if (ret != HPDF_OK)
         return ret;
-
-    /* allocate glyph-offset-table. */
-    attr->glyph_tbl.offsets = HPDF_GetMem (fontdef->mmgr,
-        sizeof (HPDF_UINT32) * (attr->num_glyphs + 1));
-
-    if (!attr->glyph_tbl.offsets)
-        return HPDF_Error_GetCode (fontdef->error);
-
-    HPDF_MemSet (attr->glyph_tbl.offsets, 0,
-            sizeof (HPDF_UINT32) * (attr->num_glyphs + 1));
-
-    /* allocate glyph-flg-table.
-     * this flgs are used to judge whether glyphs should be embedded.
-     */
-    attr->glyph_tbl.flgs = HPDF_GetMem (fontdef->mmgr,
-        sizeof (HPDF_BYTE) * attr->num_glyphs);
-
-    if (!attr->glyph_tbl.flgs)
-        return HPDF_Error_GetCode (fontdef->error);
-
-    HPDF_MemSet (attr->glyph_tbl.flgs, 0,
-        sizeof (HPDF_BYTE) * attr->num_glyphs);
-    attr->glyph_tbl.flgs[0] = 1;
 
     poffset = attr->glyph_tbl.offsets;
     if (attr->header.index_to_loc_format == 0) {
@@ -1537,7 +1606,7 @@ ParseName  (HPDF_FontDef  fontdef)
                 attr->name_tbl.format, attr->name_tbl.count,
                 attr->name_tbl.string_offset));
 
-    attr->name_tbl.name_records = HPDF_GetMem (fontdef->mmgr,
+    attr->name_tbl.name_records = (HPDF_TTF_NameRecord*)HPDF_GetMem (fontdef->mmgr,
             sizeof (HPDF_TTF_NameRecord) * attr->name_tbl.count);
 
     if (!attr->name_tbl.name_records)
@@ -1642,6 +1711,9 @@ ParseName  (HPDF_FontDef  fontdef)
     * if subfamily name is "Bold" or "Italic" or "BoldItalic", set flags
     * attribute.
     */
+    /*
+    // NOTE: font is already BOLD/ITALIC therefore do not do it again!
+
     if (HPDF_MemCmp ((HPDF_BYTE *)tmp, (HPDF_BYTE *)"Regular", 7) != 0) {
         char *dst = attr->base_font + len_id1;
         char *src = tmp;
@@ -1663,7 +1735,7 @@ ParseName  (HPDF_FontDef  fontdef)
             fontdef->flags |= HPDF_FONT_FOURCE_BOLD;
         if (HPDF_StrStr (tmp, "Italic", len_id2))
             fontdef->flags |= HPDF_FONT_ITALIC;
-    }
+    }*/
 
     HPDF_MemCpy ((HPDF_BYTE *)fontdef->base_font, (HPDF_BYTE *)attr->base_font, HPDF_LIMIT_MAX_NAME_LEN + 1);
 
@@ -1749,22 +1821,77 @@ ParseOS2  (HPDF_FontDef  fontdef)
     if (attr->sfamilyclass[0] == 12)
         fontdef->flags = fontdef->flags | HPDF_FONT_SYMBOLIC;
 
+    if ((ret = HPDF_Stream_Seek (attr->stream, tbl->offset + 68, HPDF_SEEK_SET)) != HPDF_OK)
+        return ret;
+
+    if ((ret = GetINT16(attr->stream, &attr->typo_ascender)) != HPDF_OK)
+        return ret;
+    if ((ret = GetINT16(attr->stream, &attr->typo_descender)) != HPDF_OK)
+        return ret;
+    if ((ret = GetINT16(attr->stream, &attr->typo_linegap)) != HPDF_OK)
+        return ret;
+    if ((ret = GetUINT16(attr->stream, &attr->win_ascent)) != HPDF_OK)
+        return ret;
+    if ((ret += GetUINT16(attr->stream, &attr->win_descent)) != HPDF_OK)
+        return ret;
+
+    attr->typo_ascender = (HPDF_INT16)((HPDF_INT32)attr->typo_ascender * 1000 / attr->header.units_per_em);
+    attr->typo_descender = (HPDF_INT16)((HPDF_INT32)attr->typo_descender * 1000 / attr->header.units_per_em);
+    attr->typo_linegap = (HPDF_INT16)((HPDF_INT32)attr->typo_linegap * 1000 / attr->header.units_per_em);
+    attr->win_ascent = (HPDF_INT16)((HPDF_INT32)attr->win_ascent * 1000 / attr->header.units_per_em);
+    attr->win_descent = (HPDF_INT16)((HPDF_INT32)attr->win_descent * 1000 / attr->header.units_per_em);
+ 
     /* get fields ulCodePageRange1 and ulCodePageRange2 */
-    if(version > 0) {
-        if ((ret = HPDF_Stream_Seek (attr->stream, 36, HPDF_SEEK_CUR)) != HPDF_OK)
-            return ret;
+    if (version > 0) {
+        // https://www.microsoft.com/typography/otspec/os2.htm
 
         if ((ret = GetUINT32 (attr->stream, &attr->code_page_range1)) != HPDF_OK)
-            return ret;
+            attr->code_page_range1 = 0; // not used
 
         if ((ret = GetUINT32 (attr->stream, &attr->code_page_range2)) != HPDF_OK)
-            return ret;
+            attr->code_page_range2 = 0; // not used
+
+        if (version > 1) {
+            if ((ret = GetUINT16 (attr->stream, &fontdef->x_height)) != HPDF_OK)
+                return ret;
+
+            if ((ret = GetUINT16 (attr->stream, &fontdef->cap_height)) != HPDF_OK)
+                return ret;
+        } else {
+            fontdef->cap_height = (int)(0.7 * attr->header.units_per_em);
+        }
     }
 
     HPDF_PTRACE(("  ParseOS2 CodePageRange1=%08X CodePageRange2=%08X\n",
                 (HPDF_UINT)attr->code_page_range1,
                 (HPDF_UINT)attr->code_page_range2));
 
+    return HPDF_OK;
+}
+
+
+static HPDF_STATUS
+ParsePost  (HPDF_FontDef  fontdef)
+{
+    HPDF_TTFontDefAttr attr = (HPDF_TTFontDefAttr)fontdef->attr;
+    HPDF_TTFTable *tbl = FindTable (fontdef, "post");
+    HPDF_STATUS ret;
+
+    HPDF_PTRACE ((" ParsePost\n"));
+
+    if (!tbl)
+        return HPDF_OK;
+
+    if ((ret = HPDF_Stream_Seek (attr->stream, tbl->offset + 8, HPDF_SEEK_SET)) != HPDF_OK)
+        return ret;
+
+    if ((ret = GetINT16(attr->stream, &attr->underline_position)) != HPDF_OK)
+        return ret;
+    if ((ret = GetINT16(attr->stream, &attr->underline_thickness)) != HPDF_OK)
+        return ret;
+
+    attr->underline_position = (HPDF_INT16)((HPDF_INT32)attr->underline_position * 1000 / attr->header.units_per_em);
+    attr->underline_thickness = (HPDF_INT16)((HPDF_INT32)attr->underline_thickness * 1000 / attr->header.units_per_em);
     return HPDF_OK;
 }
 
@@ -2017,7 +2144,7 @@ HPDF_TTFontDef_SaveFontData  (HPDF_FontDef   fontdef,
 
     offset_base = 12 + 16 * HPDF_REQUIRED_TAGS_COUNT;
 
-    new_offsets = HPDF_GetMem (fontdef->mmgr,
+    new_offsets = (HPDF_UINT32*)HPDF_GetMem (fontdef->mmgr,
             sizeof (HPDF_UINT32) * (attr->num_glyphs + 1));
     if (!new_offsets) {
         HPDF_Stream_Free (tmp_stream);
