@@ -17,6 +17,8 @@
 
 unit hpdf_types;
 
+{$IFDEF FPC}{$MODE DELPHI}{$ENDIF}
+
 interface
 
 uses
@@ -183,8 +185,8 @@ type
   );
 
   THPDF_EncryptMode = (
-    HPDF_ENCRYPT_R2,
-    HPDF_ENCRYPT_R3
+    HPDF_ENCRYPT_R2 = 2,
+    HPDF_ENCRYPT_R3 = 3
   );
 
 
@@ -224,9 +226,9 @@ THPDF_Free_Func = procedure (aptr: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$
 {*------ dash mode ----------------------------------------------------------*}
 
   THPDF_DashMode = packed record
-    ptn: array[0..7] of HPDF_UINT16;
+    ptn: array[0..7] of HPDF_REAL;
     num_ptn: HPDF_UINT16;
-    phase: HPDF_UINT16;
+    phase: HPDF_REAL;
   end;
 
 
@@ -240,6 +242,7 @@ THPDF_Free_Func = procedure (aptr: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$
     d: HPDF_REAL;
     x: HPDF_REAL;
     y: HPDF_REAL;
+    constructor Create(Aa, Ab, Ac, Ad, Ax, Ay: HPDF_REAL);
   end;
 
 {*---------------------------------------------------------------------------*}
@@ -304,7 +307,7 @@ THPDF_Free_Func = procedure (aptr: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$
   THPDF_LineCap = (
     HPDF_BUTT_END,
     HPDF_ROUND_END,
-    HPDF_PROJECTING_SCUARE_END,
+    HPDF_PROJECTING_SQUARE_END,
     HPDF_LINECAP_EOF
   );
 
@@ -422,7 +425,7 @@ THPDF_Free_Func = procedure (aptr: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$
 
 
   THPDF_AnnotHighlightMode = (
-    HPDF_ANNOT_NO_HIGHTLIGHT,
+    HPDF_ANNOT_NO_HIGHLIGHT,
     HPDF_ANNOT_INVERT_BOX,
     HPDF_ANNOT_INVERT_BORDER,
     HPDF_ANNOT_DOWN_APPEARANCE,
@@ -563,6 +566,15 @@ THPDF_Free_Func = procedure (aptr: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$
   );
 
 
+  THPDF_PageBoundary = (
+    HPDF_PAGE_MEDIABOX = 0,
+    HPDF_PAGE_CROPBOX,
+    HPDF_PAGE_BLEEDBOX,
+    HPDF_PAGE_TRIMBOX,
+    HPDF_PAGE_ARTBOX
+  );
+
+
   THPDF_EncoderType = (
     HPDF_ENCODER_TYPE_SINGLE_BYTE,
     HPDF_ENCODER_TYPE_MULTI_BYTE,
@@ -580,27 +592,6 @@ THPDF_Free_Func = procedure (aptr: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$
     HPDF_BYTE_TYPE_UNKNOWN
   );
 
-
-  THPDF_TextAlignment = (
-    HPDF_TALIGN_LEFT                  =         0,
-    HPDF_TALIGN_RIGHT                 =         1,
-    HPDF_TALIGN_CENTER                =         2,
-    HPDF_TALIGN_JUSTIFY               =         3,
-    HPDF_TALIGN_STRETCH               =         4,
-    HPDF_TALIGN_JUSTIFY_ALL           =       $83,
-    HPDF_TALIGN_STRETCH_ALL           =       $84,
-    HPDF_TALIGN_MASK                  =       $FF,
-    HPDF_VALIGN_TOP                   =     $0000,
-    HPDF_VALIGN_BOTTOM                =     $0100,
-    HPDF_VALIGN_CENTER                =     $0200,
-    HPDF_VALIGN_JUSTIFY               =     $0300,
-    HPDF_VALIGN_STRETCH               =     $0400,
-    HPDF_VALIGN_JUSTIFY_ALL           =     $8300,
-    HPDF_VALIGN_STRETCH_ALL           =     $8400,
-    HPDF_VALIGN_MASK                  =     $FF00,
-    HPDF_ALIGNOPT_BIDI_EACH_PARAGRAPH = $40000000,
-    HPDF_ALIGNOPT_REMOVE_TATWEEL      = $20000000
-  );
 
 {*----------------------------------------------------------------------------*}
 
@@ -662,6 +653,16 @@ THPDF_Free_Func = procedure (aptr: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$
 {$Z-}
 
 implementation
+
+constructor THPDF_TransMatrix.Create(Aa, Ab, Ac, Ad, Ax, Ay: HPDF_REAL);
+begin
+  a := Aa;
+  b := Ab;
+  c := Ac;
+  d := Ad;
+  x := Ax;
+  y := Ay;
+end;
 
 constructor THPDF_RGBColor.Create(Ar, Ag, Ab: HPDF_REAL);
 begin

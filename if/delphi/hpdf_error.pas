@@ -17,6 +17,8 @@
 
 unit hpdf_error;
 
+{$IFDEF FPC}{$MODE DELPHI}{$ENDIF}
+
 interface
 
 const
@@ -141,6 +143,7 @@ const
   HPDF_INVALID_U3D_DATA             = $1083;
   HPDF_NAME_CANNOT_GET_NAMES        = $1084;
   HPDF_INVALID_ICC_COMPONENT_NUM    = $1085;
+  HPDF_PAGE_INVALID_BOUNDARY        = $1086;
   HPDF_TOO_SMALL_PDF_VERSION        = $1090;
   HPDF_CONVERTER_NOT_FOUND          = $1091;
   HPDF_NOT_UTF_ENCODING             = $1092;

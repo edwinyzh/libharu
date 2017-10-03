@@ -17,6 +17,8 @@
 
 unit hpdf_consts;
 
+{$IFDEF FPC}{$MODE DELPHI}{$ENDIF}
+
 interface
 
 uses
@@ -571,6 +573,27 @@ const
   HPDF_TLW_HYPHENATION = $100;
   HPDF_TLW_PRAGRAPH_BREAK = $200;
   HPDF_TLW_PAGE_BREAK = $400;
+
+{*----- TextAlignment flags --------------------------------------------------*}
+
+  HPDF_TALIGN_LEFT                  =         0;
+  HPDF_TALIGN_RIGHT                 =         1;
+  HPDF_TALIGN_CENTER                =         2;
+  HPDF_TALIGN_JUSTIFY               =         3;
+  HPDF_TALIGN_STRETCH               =         4;
+  HPDF_TALIGN_JUSTIFY_ALL           =       $83;
+  HPDF_TALIGN_STRETCH_ALL           =       $84;
+  HPDF_TALIGN_MASK                  =       $FF;
+  HPDF_VALIGN_TOP                   =     $0000;
+  HPDF_VALIGN_BOTTOM                =     $0100;
+  HPDF_VALIGN_CENTER                =     $0200;
+  HPDF_VALIGN_JUSTIFY               =     $0300;
+  HPDF_VALIGN_STRETCH               =     $0400;
+  HPDF_VALIGN_JUSTIFY_ALL           =     $8300;
+  HPDF_VALIGN_STRETCH_ALL           =     $8400;
+  HPDF_VALIGN_MASK                  =     $FF00;
+  HPDF_ALIGNOPT_BIDI_EACH_PARAGRAPH = $40000000;
+  HPDF_ALIGNOPT_REMOVE_TATWEEL      = $20000000;
 
 
 {*----------------------------------------------------------------------------*}
