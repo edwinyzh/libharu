@@ -564,6 +564,15 @@ typedef enum _HPDF_PageDirection {
 } HPDF_PageDirection;
 
 
+typedef enum _HPDF_PageBoundary {
+    HPDF_PAGE_MEDIABOX = 0,
+    HPDF_PAGE_CROPBOX,
+    HPDF_PAGE_BLEEDBOX,
+    HPDF_PAGE_TRIMBOX,
+    HPDF_PAGE_ARTBOX
+} HPDF_PageBoundary;
+
+
 typedef enum  _HPDF_EncoderType {
     HPDF_ENCODER_TYPE_SINGLE_BYTE,
     HPDF_ENCODER_TYPE_MULTI_BYTE,

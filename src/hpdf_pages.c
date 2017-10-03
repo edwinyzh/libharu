@@ -1656,6 +1656,46 @@ HPDF_Page_SetHeight  (HPDF_Page    page,
 
 
 HPDF_EXPORT(HPDF_STATUS)
+HPDF_Page_SetBoundary  (HPDF_Page           page,
+                        HPDF_PageBoundary   boundary,
+                        HPDF_REAL           left,
+                        HPDF_REAL           bottom,
+                        HPDF_REAL           right,
+                        HPDF_REAL           top)
+{
+    HPDF_PTRACE((" HPDF_Page_SetBoundary\n"));
+
+    if (!HPDF_Page_Validate (page))
+        return HPDF_INVALID_PAGE;
+
+    char *key;
+    switch(boundary){
+        case HPDF_PAGE_MEDIABOX:
+            key = "MediaBox";
+            break;
+        case HPDF_PAGE_CROPBOX:
+            key = "CropBox";
+            break;
+        case HPDF_PAGE_BLEEDBOX:
+            key = "BleedBox";
+            break;
+        case HPDF_PAGE_TRIMBOX:
+            key = "TrimBox";
+            break;
+        case HPDF_PAGE_ARTBOX:
+            key = "ArtBox";
+            break;
+        default:
+            return HPDF_RaiseError (page->error, HPDF_PAGE_INVALID_BOUNDARY, 0);
+            break;
+    }
+
+    return HPDF_Dict_Add (page, key, HPDF_Box_Array_New (page->mmgr,
+                HPDF_ToBox ((HPDF_INT16)left, (HPDF_INT16)bottom, (HPDF_INT16)right, (HPDF_INT16)top)));
+}
+
+
+HPDF_EXPORT(HPDF_STATUS)
 HPDF_Page_SetSize  (HPDF_Page             page,
                     HPDF_PageSizes        size,
                     HPDF_PageDirection    direction)
