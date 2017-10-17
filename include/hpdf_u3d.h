@@ -33,7 +33,7 @@ HPDF_EXPORT(HPDF_Image) HPDF_LoadU3DFromMem (HPDF_Doc pdf, const HPDF_BYTE *buff
 HPDF_EXPORT(HPDF_Dict) HPDF_Create3DView (HPDF_MMgr mmgr, const char *name);
 HPDF_EXPORT(HPDF_STATUS) HPDF_U3D_Add3DView(HPDF_U3D u3d, HPDF_Dict view);
 HPDF_EXPORT(HPDF_STATUS) HPDF_U3D_SetDefault3DView(HPDF_U3D u3d, const char *name);
-HPDF_EXPORT(HPDF_STATUS) HPDF_U3D_AddOnInstanciate(HPDF_U3D u3d, HPDF_JavaScript javaScript);
+HPDF_EXPORT(HPDF_STATUS) HPDF_U3D_AddOnInstantiate(HPDF_U3D u3d, HPDF_JavaScript javaScript);
 HPDF_EXPORT(HPDF_Dict) HPDF_3DView_CreateNode(HPDF_Dict view, const char *name);
 HPDF_EXPORT(HPDF_STATUS) HPDF_3DViewNode_SetOpacity(HPDF_Dict node, HPDF_REAL opacity);
 HPDF_EXPORT(HPDF_STATUS) HPDF_3DViewNode_SetVisibility(HPDF_Dict node, HPDF_BOOL visible);

@@ -1312,7 +1312,7 @@ var
         HPDF_STATUS; {$IFDEF Linux}cdecl{$ELSE}stdcall{$ENDIF};
 
 
-  HPDF_U3D_AddOnInstanciate: function (u3d: HPDF_U3D; javaScript: HPDF_JavaScript):
+  HPDF_U3D_AddOnInstantiate: function (u3d: HPDF_U3D; javaScript: HPDF_JavaScript):
         HPDF_STATUS; {$IFDEF Linux}cdecl{$ELSE}stdcall{$ENDIF};
 
 
@@ -1697,7 +1697,7 @@ begin
       @HPDF_GetU3DMMgr := LoadLibHaruProc('HPDF_GetU3DMMgr');
       @HPDF_U3D_Add3DView := LoadLibHaruProc('HPDF_U3D_Add3DView');
       @HPDF_U3D_SetDefault3DView := LoadLibHaruProc('HPDF_U3D_SetDefault3DView');
-      @HPDF_U3D_AddOnInstanciate := LoadLibHaruProc('HPDF_U3D_AddOnInstanciate');
+      @HPDF_U3D_AddOnInstantiate := LoadLibHaruProc('HPDF_U3D_AddOnInstantiate');
       @HPDF_3DView_CreateNode := LoadLibHaruProc('HPDF_3DView_CreateNode');
       @HPDF_3DViewNode_SetOpacity := LoadLibHaruProc('HPDF_3DViewNode_SetOpacity');
       @HPDF_3DViewNode_SetVisibility := LoadLibHaruProc('HPDF_3DViewNode_SetVisibility');
@@ -2010,7 +2010,7 @@ begin
                 Assigned(HPDF_GetU3DMMgr) and
                 Assigned(HPDF_U3D_Add3DView) and
                 Assigned(HPDF_U3D_SetDefault3DView) and
-                Assigned(HPDF_U3D_AddOnInstanciate) and
+                Assigned(HPDF_U3D_AddOnInstantiate) and
                 Assigned(HPDF_3DView_CreateNode) and
                 Assigned(HPDF_3DViewNode_SetOpacity) and
                 Assigned(HPDF_3DViewNode_SetVisibility) and

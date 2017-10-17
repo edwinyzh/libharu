@@ -273,11 +273,11 @@ HPDF_EXPORT(HPDF_STATUS) HPDF_U3D_Add3DView(HPDF_U3D u3d, HPDF_Dict view)
 }
 
 
-HPDF_EXPORT(HPDF_STATUS) HPDF_U3D_AddOnInstanciate(HPDF_U3D u3d, HPDF_JavaScript javascript)
+HPDF_EXPORT(HPDF_STATUS) HPDF_U3D_AddOnInstantiate(HPDF_U3D u3d, HPDF_JavaScript javascript)
 {
 	HPDF_STATUS ret = HPDF_OK;
 
-	HPDF_PTRACE ((" HPDF_U3D_AddOnInstanciate\n"));
+	HPDF_PTRACE ((" HPDF_U3D_AddOnInstantiate\n"));
 
 	if (u3d == NULL || javascript == NULL) {
 		return HPDF_INVALID_U3D_DATA;
