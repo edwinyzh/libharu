@@ -115,13 +115,13 @@ type
 
 {*  HPDF_Point struct
  *}
-  THPDF_Point = packed record
+  THPDF_Point = record
     x: HPDF_REAL;
     y: HPDF_REAL;
   end;
   PHPDF_Point = ^THPDF_Point;
 
-  THPDF_Rect = packed record
+  THPDF_Rect = record
     left: HPDF_REAL;
     bottom: HPDF_REAL;
     right: HPDF_REAL;
@@ -130,7 +130,7 @@ type
 
 {*  HPDF_Point3D struct
  *}
-  THPDF_Point3D = packed record
+  THPDF_Point3D = record
     x: HPDF_REAL;
     y: HPDF_REAL;
     z: HPDF_REAL;
@@ -140,7 +140,7 @@ type
 
 {* HPDF_Date struct
  *}
-  THPDF_Date = packed record
+  THPDF_Date = record
     year: HPDF_INT;
     month: HPDF_INT;
     day: HPDF_INT;
@@ -202,7 +202,7 @@ THPDF_Free_Func = procedure (aptr: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$
 {*---------------------------------------------------------------------------*}
 {*------ text width struct --------------------------------------------------*}
 
-  THPDF_TextWidth = packed record
+  THPDF_TextWidth = record
     numchars: HPDF_UINT;
     numwords: HPDF_UINT;   {* don't use this value. *}
     width: HPDF_UINT;
@@ -210,7 +210,7 @@ THPDF_Free_Func = procedure (aptr: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$
   end;
 
 
-  THPDF_TextLineWidth = packed record
+  THPDF_TextLineWidth = record
     flags: HPDF_UINT16;
     linebytes: HPDF_UINT16;
     numbytes: HPDF_UINT16;
@@ -225,7 +225,7 @@ THPDF_Free_Func = procedure (aptr: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$
 {*---------------------------------------------------------------------------*}
 {*------ dash mode ----------------------------------------------------------*}
 
-  THPDF_DashMode = packed record
+  THPDF_DashMode = record
     ptn: array[0..7] of HPDF_REAL;
     num_ptn: HPDF_UINT16;
     phase: HPDF_REAL;
@@ -235,7 +235,7 @@ THPDF_Free_Func = procedure (aptr: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$
 {*---------------------------------------------------------------------------*}
 {*----- HPDF_TransMatrix struct ---------------------------------------------*}
 
-  THPDF_TransMatrix = packed record
+  THPDF_TransMatrix = record
     a: HPDF_REAL;
     b: HPDF_REAL;
     c: HPDF_REAL;
@@ -248,7 +248,7 @@ THPDF_Free_Func = procedure (aptr: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$
 {*---------------------------------------------------------------------------*}
 {*----- HPDF_3DMatrix struct ------------------------------------------------*}
 
-  THPDF_3DMatrix = packed record
+  THPDF_3DMatrix = record
     a: HPDF_REAL;
     b: HPDF_REAL;
     c: HPDF_REAL;
@@ -283,7 +283,7 @@ THPDF_Free_Func = procedure (aptr: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$
 {*---------------------------------------------------------------------------*}
 {*----- HPDF_RGBColor struct ------------------------------------------------*}
 
-  THPDF_RGBColor = packed record
+  THPDF_RGBColor = record
     r: HPDF_REAL;
     g: HPDF_REAL;
     b: HPDF_REAL;
@@ -293,7 +293,7 @@ THPDF_Free_Func = procedure (aptr: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$
 {*---------------------------------------------------------------------------*}
 {*----- HPDF_CMYKColor struct -----------------------------------------------*}
 
-  THPDF_CMYKColor = packed record
+  THPDF_CMYKColor = record
     c: HPDF_REAL;
     m: HPDF_REAL;
     y: HPDF_REAL;
@@ -632,7 +632,7 @@ THPDF_Free_Func = procedure (aptr: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$
   THPDF_Converter_Delete_Func = function (converter: HPDF_Converter; free_fn: THPDF_Free_Func): HPDF_Converter;
     {$IFDEF Linux}cdecl{$ELSE}stdcall{$ENDIF};
 
-  THPDF_Converter_Rec = packed record
+  THPDF_Converter_Rec = record
     convert_fn: THPDF_Converter_Convert_Func;
     delete_fn: THPDF_Converter_Delete_Func;
     src_charenc: THPDF_CharEnc;
@@ -641,7 +641,7 @@ THPDF_Free_Func = procedure (aptr: Pointer); {$IFDEF Linux}cdecl{$ELSE}stdcall{$
     chars_factor: HPDF_UINT;
   end;
 
-  THPDF_ConverterBiDi_Param_Rec = packed record
+  THPDF_ConverterBiDi_Param_Rec = record
     max_chars: HPDF_UINT32;
     base_dir: HPDF_UINT32;
     bidi_types: HPDF_PUINT32;
