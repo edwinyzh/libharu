@@ -812,7 +812,7 @@ var
 
   HPDF_Font_MeasureTextLines: function (font: HPDF_Font; const text: HPDF_PCHAR; len: HPDF_UINT;
         line_width: HPDF_REAL; font_size: HPDF_REAL; char_space: HPDF_REAL; word_space: HPDF_REAL;
-        options: HPDF_INT; var width: THPDF_TextLineWidth; max_lines: HPDF_UINT) : HPDF_UINT;
+        options: HPDF_INT; out width: THPDF_TextLineWidth; max_lines: HPDF_UINT) : HPDF_UINT;
         {$IFDEF Linux}cdecl{$ELSE}stdcall{$ENDIF};
 
 
@@ -879,7 +879,7 @@ var
 
 
   HPDF_Page_MeasureTextLines: function (page: HPDF_Page; const text: HPDF_PCHAR; line_width: HPDF_REAL;
-        options: HPDF_INT; var width: THPDF_TextLineWidth; max_lines: HPDF_UINT): HPDF_UINT;
+        options: HPDF_INT; out width: THPDF_TextLineWidth; max_lines: HPDF_UINT): HPDF_UINT;
          {$IFDEF Linux}cdecl{$ELSE}stdcall{$ENDIF};
 
 
@@ -1434,6 +1434,7 @@ begin
       @HPDF_InsertPage := LoadLibHaruProc('HPDF_InsertPage');
       @HPDF_Page_SetWidth := LoadLibHaruProc('HPDF_Page_SetWidth');
       @HPDF_Page_SetHeight := LoadLibHaruProc('HPDF_Page_SetHeight');
+      @HPDF_Page_SetBoundary := LoadLibHaruProc('HPDF_Page_SetBoundary');
       @HPDF_Page_SetSize := LoadLibHaruProc('HPDF_Page_SetSize');
       @HPDF_Page_SetRotate := LoadLibHaruProc('HPDF_Page_SetRotate');
       @HPDF_Page_SetZoom := LoadLibHaruProc('HPDF_Page_SetZoom');
@@ -1747,6 +1748,7 @@ begin
                 Assigned(HPDF_InsertPage) and
                 Assigned(HPDF_Page_SetWidth) and
                 Assigned(HPDF_Page_SetHeight) and
+                Assigned(HPDF_Page_SetBoundary) and
                 Assigned(HPDF_Page_SetSize) and
                 Assigned(HPDF_Page_SetRotate) and
                 Assigned(HPDF_Page_SetZoom) and
